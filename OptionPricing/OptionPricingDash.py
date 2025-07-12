@@ -4,10 +4,7 @@ from scipy.stats import norm
 from math import log, exp, sqrt
 
 def black_scholes(S, K, r, T, q, vol, option_type='call'):
-    """
-    Black-Scholes option pricing model with improved error handling
-    """
-    # Input validation
+    
     if S <= 0 or K <= 0 or T <= 0 or vol <= 0:
         return None
     
