@@ -5,13 +5,11 @@ import pandas as pd
 import numpy as np
 
 def main():
-    # Step 1: User input
     ticker_symbol = input("Enter the ticker symbol: ").upper()
     
     try:
         ticker = yf.Ticker(ticker_symbol)
 
-        # Step 2: Get spot price with error handling
         hist_data = ticker.history(period="1d")
         if hist_data.empty:
             print("Error: No price data available for this ticker")
@@ -20,13 +18,12 @@ def main():
         spot_price = hist_data['Close'].iloc[-1]
         print(f"\nLive Spot Price: ${spot_price:.2f}")
 
-        # Step 3: Fetch nearest expiry and options
         options = ticker.options
         if not options:
             print("Error: No options data available for this ticker")
             return
             
-        expiry = options[0]  # Nearest expiry
+        expiry = options[0]  
         print(f"Selected Expiry: {expiry}")
         
         option_chain = ticker.option_chain(expiry)
@@ -37,16 +34,16 @@ def main():
             print("Error: No option chain data available for selected expiry")
             return
 
-        # Step 4: Find ATM strike (closest to spot price)
+        # Find ATM strike (closest to spot price)
         strikes = calls['strike'].tolist()
         atm_strike = min(strikes, key=lambda x: abs(x - spot_price))
         print(f"ATM Strike: ${atm_strike}")
 
-        # Step 5: Get ATM option rows
+        
         atm_call = calls[calls['strike'] == atm_strike]
         atm_put = puts[puts['strike'] == atm_strike]
 
-        # Step 6: Calculate Time to expiry (T) with improved handling
+        
         expiry_date = pd.to_datetime(expiry)
         now = pd.to_datetime(dt.datetime.now())
         days_to_expiry = (expiry_date - now).days
@@ -60,11 +57,11 @@ def main():
         print(f"Days to Expiry: {days_to_expiry}")
         print(f"Time to Expiry (T): {T:.4f}")
         
-        # Market parameters
+        
         r = 0.04  # Risk-free rate
         q = 0.01  # Dividend yield
 
-        # Step 7: Calculate for Call
+        
         if not atm_call.empty:
             vol_call = atm_call['impliedVolatility'].values[0]
             market_call_price = atm_call['lastPrice'].values[0]
@@ -81,7 +78,6 @@ def main():
             print(f"Volume: {volume_call:,.0f}")
             print(f"Implied Volatility: {vol_call*100:.2f}%")
             
-            # Check for valid IV
             if vol_call <= 0 or np.isnan(vol_call):
                 print("❌ Error: Invalid implied volatility for call option")
             else:
@@ -101,7 +97,6 @@ def main():
                 else:
                     print("❌ Error: Could not calculate Black-Scholes price for call option")
 
-        # Step 8: Calculate for Put
         if not atm_put.empty:
             vol_put = atm_put['impliedVolatility'].values[0]
             market_put_price = atm_put['lastPrice'].values[0]
